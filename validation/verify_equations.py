@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Verification of every displayed equation of the paper.
-Each equation is treated as a hypothesis and tested numerically.
-"""
+"""Numerical checks of the displayed equations (double precision, mpmath where
+noted)."""
 import numpy as np
 from scipy.linalg import solve_continuous_lyapunov
 import mpmath as mp
@@ -57,12 +54,14 @@ def symplectic_eigs(sig):
     pos = np.sort(ev[ev > 0])
     return pos
 
-ok = lambda name, val, ref, tol: print(f"{'PASS' if abs(val-ref)<=tol else 'FAIL'}  {name}: got {val:.6e}, expect {ref:.6e}, diff {abs(val-ref):.2e}")
+def ok(name, val, ref, tol):
+    flag = "ok" if abs(val - ref) <= tol else "MISMATCH"
+    print(f"  {name}: got {val:.6e}, expect {ref:.6e}  [{flag}]")
 
 kappa, gam, nth = 0.1, 1e-4, 100.0
 Gth = np.sqrt(kappa*gam)/2
 
-print("="*72); print("T1  eq:eigen  spectrum formula"); print("="*72)
+print("-- spectrum formula")
 for G in [0.3*Gth, 0.9*Gth]:
     ev = np.linalg.eigvals(A_full("blue", G, kappa, gam))
     lp = -((kappa+gam)/4) + np.sqrt(16*G**2+(kappa-gam)**2)/4
@@ -71,7 +70,7 @@ for G in [0.3*Gth, 0.9*Gth]:
     cnt_p = np.sum(np.abs(ev - lp) < 1e-12); cnt_m = np.sum(np.abs(ev - lm) < 1e-12)
     print(f"     degeneracy at G={G/Gth:.2f}Gth:  n(lambda+)={cnt_p}, n(lambda-)={cnt_m}")
 
-print(); print("="*72); print("T2  eq:lambdaslow  critical-eigenvalue slope"); print("="*72)
+print("\n-- critical-eigenvalue slope")
 for (k2, g2) in [(kappa, gam), (1.0, 1.0)]:
     gth2 = np.sqrt(k2*g2)/2
     for d in [1e-6*gth2, 1e-7*gth2]:
@@ -80,7 +79,7 @@ for (k2, g2) in [(kappa, gam), (1.0, 1.0)]:
         s_exact = 2*np.sqrt(k2*g2)/(k2+g2)        # paper:  lambda+ = -2 sqrt(kg)/(k+g) * delta
         ok(f"kappa={k2},gamma={g2},d={d:.1e}  -lambda+/d", s_exact, -lp/d, 1e-3*np.abs(lp/d))
 
-print(); print("="*72); print("T3  eq:ss-opt/mech/cross  closed-form steady state"); print("="*72)
+print("\n-- closed-form steady state")
 def closed_forms(G, k2, g2, n2):
     D4 = 4*G**2 - k2*g2
     sqd = (4*G**2*(k2 - g2*(2*n2+1)) - k2*g2*(k2+g2)) / (2*(k2+g2)*D4)
@@ -99,7 +98,7 @@ for (k2, g2, n2, fG) in [(0.1, 1e-4, 100.0, 0.9), (1.0, 1.0, 0.0, 0.8), (2.0, 0.
           f"p_b={S[3,3]:.6e} vs q_b {S[2,2]:.6e} equal: {np.isclose(S[3,3],S[2,2])}, "
           f"s_pdqb={S[1,2]:.6e} vs s_qdpb {S[0,3]:.6e} equal: {np.isclose(S[1,2],S[0,3])}")
 
-print(); print("="*72); print("T4  eq:abc  limiting block entries"); print("="*72)
+print("\n-- limiting block entries a, b, c")
 a = gam**1.5*np.sqrt(kappa)*(nth+1)/(4*(kappa+gam))
 b = np.sqrt(gam)*kappa**1.5*(nth+1)/(4*(kappa+gam))
 c = -kappa*gam*(nth+1)/(4*(kappa+gam))
@@ -113,23 +112,23 @@ S = ss("blue", Gth-d, kappa, gam, nth)
 ok("delta*s_qdqd -> a", S[0, 0]*d, a, 1e-5*abs(a))
 ok("delta*s_qbqb -> b", S[2, 2]*d, b, 1e-5*abs(b))
 ok("delta*s_qdpb -> c", S[0, 3]*d, c, 1e-5*abs(c))
-print(f"     ab - c^2 = {a*b-c*c:.3e}  (eq:abcheck, must be 0)")
+print(f"     ab - c^2 = {a*b-c*c:.3e}  (must be 0)")
 
-print(); print("="*72); print("T5  eq:mechanism  Sigma = (tau_c/2) P_c D P_c^T ?"); print("="*72)
+print("\n-- Sigma = (tau_c/2) P_c D P_c^T")
 A = A_full("blue", Gth-d, kappa, gam)
 w, V = np.linalg.eig(A)
 idx = np.argsort(w.real)[-2:]          # two critical eigenvalues
 Pc = V[:, idx] @ np.linalg.inv(V)[idx, :]   # oblique spectral projector
 D = D_mat(kappa, gam, nth)
 Sig_mech = Pc @ D @ Pc.T
-tau_c = (kappa+gam)/(2*np.sqrt(kappa*gam))     # paper, Eq. (eq:lambdaslow)
+tau_c = (kappa+gam)/(2*np.sqrt(kappa*gam))
 Sdig = S*d   # = Sigma numeric
 pred = (tau_c/2)*Sig_mech
 ok("  [qd,qd]", pred[0, 0], Sdig[0, 0], 1e-4*abs(Sdig[0, 0]))
 ok("  [qb,qb]", pred[2, 2], Sdig[2, 2], 1e-4*abs(Sdig[2, 2]))
 ok("  [qd,pb]", pred[0, 3], Sdig[0, 3], 1e-4*abs(Sdig[0, 3]))
 
-print(); print("="*72); print("T6  eq:CPi  entropy-production asymptotics"); print("="*72)
+print("\n-- entropy-production asymptotics")
 for d in [1e-6*Gth, 1e-7*Gth, 1e-8*Gth]:
     S = ss("blue", Gth-d, kappa, gam, nth)
     D = D_mat(kappa, gam, nth)
@@ -141,7 +140,7 @@ for d in [1e-6*Gth, 1e-7*Gth, 1e-8*Gth]:
 CPi = gam**1.5*np.sqrt(kappa)*(nth+1)**2/((1+gam/kappa)*(2*nth+1))
 print(f"     closed form C_Pi = {CPi:.6e};  2*kappa*a + gamma*b/(n+1/2) = {2*kappa*a + gam*b/(nth+0.5):.6e}")
 
-print(); print("="*72); print("T7  eq:CPi-general  arbitrary diffusion"); print("="*72)
+print("\n-- arbitrary diffusion")
 rng = np.random.default_rng(7)
 for i in range(3):
     dd, db = rng.uniform(0.01, 2), rng.uniform(0.01, 2)
@@ -152,7 +151,7 @@ for i in range(3):
     CPg = np.sqrt(kappa*gam)*(dd*gam+db*kappa)/(4*(kappa+gam))*(kappa/dd+gam/db)
     ok(f"random d=({dd:.3f},{db:.3f})  d*Pi", d*(t1+t2+t3), CPg, 1e-5*CPg)
 
-print(); print("="*72); print("T8  eq:tradeoff  F/Pi^2"); print("="*72)
+print("\n-- F/Pi^2")
 for d in [1e-6*Gth, 1e-7*Gth]:
     S = ss("blue", Gth-d, kappa, gam, nth)
     D = D_mat(kappa, gam, nth)
@@ -163,7 +162,7 @@ for d in [1e-6*Gth, 1e-7*Gth]:
     ref = (1+gam/kappa)**2*(2*nth+1)**2/(kappa*gam**3*(nth+1)**4)
     ok(f"F/Pi^2 (d={d/Gth:.0e}Gth)", F/Pi**2, ref, 1e-3*ref)
 
-print(); print("="*72); print("T9  subleading c1  (1-F d^2)/(d/Gth)"); print("="*72)
+print("\n-- subleading c1")
 for (k2, g2, n2) in [(0.1, 1e-4, 100.0), (1.0, 1.0, 5.0), (0.3, 3e-3, 50.0)]:
     gth2 = np.sqrt(k2*g2)/2
     h = 1e-9*gth2; d = 1e-6*gth2
@@ -173,7 +172,7 @@ for (k2, g2, n2) in [(0.1, 1e-4, 100.0), (1.0, 1.0, 5.0), (0.3, 3e-3, 50.0)]:
     c1 = (1-F*d**2)/(d/gth2)
     print(f"     kappa={k2}, gamma={g2}, n={n2}:  c1 = {c1:.4f}")
 
-print(); print("="*72); print("T10  red sideband  eigenvalues / limits"); print("="*72)
+print("\n-- red sideband")
 for G in [0.5*np.abs(kappa-gam)/4*1.1, 3*np.abs(kappa-gam)/4]:
     ev = np.linalg.eigvals(A_full("red", G, kappa, gam))
     if G > abs(kappa-gam)/4:
@@ -189,7 +188,7 @@ t1, t2, t3 = Pi_rate(Sr, D, kappa, gam)
 CPred = 4*gam*kappa*nth**2/(2*gam*nth+gam+2*kappa*nth+kappa)
 ok("red Pi(G=50) -> closed form", t1+t2+t3, CPred, 1e-3*CPred)
 
-print(); print("="*72); print("T11  eq:nus  symplectic eigenvalue near threshold"); print("="*72)
+print("\n-- symplectic eigenvalue near threshold")
 for d in [1e-7*Gth, 1e-8*Gth]:
     S = ss("blue", Gth-d, kappa, gam, nth)
     nu = symplectic_eigs(S)
@@ -198,13 +197,10 @@ for d in [1e-7*Gth, 1e-8*Gth]:
     ok(f"nu_+ (d={d/Gth:.0e}Gth)", nu[1], ref, 1e-4*ref)
     print(f"     nu_- = {nu[0]:.6f} (should -> 0.5)")
 
-print(); print("="*72); print("T12  discussion n_b formula"); print("="*72)
+print("\n-- n_b near threshold")
 for d in [1e-5*Gth, 1e-6*Gth]:
     S = ss("blue", Gth-d, kappa, gam, nth)
     nb = (S[2, 2]+S[3, 3])/2 - 0.5
-    claimed = ((kappa+4*gam)*nth - kappa)*np.sqrt(kappa*gam)/(8*(kappa+gam)*d)
     bcoef = np.sqrt(gam)*kappa**1.5*(nth+1)/(4*(kappa+gam))
-    print(f"     d={d/Gth:.0e}Gth:  exact d*n_b={nb*d:.6e} | discussion formula *d = {claimed*d:.6e} | b(eq:abc)={bcoef:.6e}")
+    print(f"     d={d/Gth:.0e}Gth:  d*n_b={nb*d:.6e}  vs  b = {bcoef:.6e}")
 
-print(); print("="*72); print("T13  Banchi QFI closed-system check (via demo convention)"); print("="*72)
-print("     delegated: demo_entropy_qfi.py Validation 1 previously gave ratio 1.0000")

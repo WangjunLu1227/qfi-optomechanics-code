@@ -1,15 +1,11 @@
-# -*- coding: utf-8 -*-
 """
-Threshold beyond the rotating-wave approximation (RWA).
+Instability threshold of the blue-sideband model without the RWA.
 
-Without the RWA the linearized Hamiltonian in the drive frame is
-    H = -Delta d^dag d + w b^dag b + G (d+d^dag)(b+b^dag),
-Delta = +w (blue sideband). In quadratures u = (q_d,p_d,q_b,p_b):
-    H = 1/2 u^T h u,  h = [[-D,0,2G,0],[0,-D,0,0],[2G,0,w,0],[0,0,0,w]],
-    A = Omega h - diag(k/2,k/2,g/2,g/2)     (time independent!)
-so the instability threshold follows from the eigenvalues of A directly
-(no Floquet needed). The RWA keeps only the two-mode-squeezing part and
-gives G_th = sqrt(k g)/2; we quantify the correction.
+Drive-frame Hamiltonian H = -Delta d'd + w b'b + G (d+d')(b+b'), Delta = +w.
+In quadratures u = (q_d,p_d,q_b,p_b):  A = Omega h - diag(k/2,k/2,g/2,g/2)
+with h = [[-D,0,2G,0],[0,-D,0,0],[2G,0,w,0],[0,0,0,w]], so the threshold
+follows from the eigenvalues of A directly (no Floquet).  The RWA gives
+G_th = sqrt(k g)/2; the correction is quantified below.
 """
 
 import numpy as np
@@ -59,6 +55,6 @@ print("\nshift / (k/w_m)^2:")
 for (w, _, _, shift) in rows:
     print(f"  w={w:>5.2f}:  shift/(k/w)^2 = {shift/(kappa/w)**2:+.4f}")
 
-# red sideband sanity: no instability at all for Delta = -w
+# red sideband: no instability at all for Delta = -w
 print("\nred sideband (Delta=-w): max Re eig at G=10*sqrt(kg):",
-      f"{max_real(10*np.sqrt(kappa*gamma), -1.0, 1.0, kappa, gamma):+.3e} (must be < 0)")
+      f"{max_real(10*np.sqrt(kappa*gamma), -1.0, 1.0, kappa, gamma):+.3e} (should be < 0)")

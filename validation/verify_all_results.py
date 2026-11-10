@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """
-Independent verification of all results in the paper.
-Three independent methods, deliberately different from verify_equations.py:
-  Part A: pure symbolics (sympy) -- closed forms, charpoly, asymptotics, C_Pi
-  Part B: 60-digit mpmath         -- mechanism eq, eq:C, c1, n_b, trade-off
-  Part C: dataset claims          -- red-sideband numbers, fitted exponents
+Checks of the paper results in three arithmetics:
+A1-A10  SymPy (closed forms, charpoly, asymptotics, C_Pi)
+B1-B6   60-digit mpmath (mechanism eq, eq:C, c1, n_b, trade-off, red sideband)
+C1-C5   double precision, same sweep as the figures
 """
 import numpy as np
 import sympy as sp
@@ -12,12 +10,7 @@ import mpmath as mp
 
 mp.mp.dps = 60
 
-# =====================================================================
-# PART A -- symbolic verification with sympy
-# =====================================================================
-print("#" * 72)
-print("# PART A: symbolic (sympy)")
-print("#" * 72)
+# A. symbolic (sympy)
 
 k, g, G = sp.symbols("kappa gamma G", positive=True)
 lam = sp.Symbol("lambda")  # plain symbol: charpoly strips assumptions
@@ -47,10 +40,10 @@ A = A_sym("blue")
 R = sp.simplify(A * Sig + Sig * A.T + D)
 print("    residual max |A sigma + sigma A^T + D| =", max(abs(x) for x in R))
 
-print("\nA2. characteristic polynomial factorisation (eq:charpoly)")
+print("\nA2. characteristic polynomial factorisation")
 cp = sp.factor(A_sym("blue").charpoly(lam).as_expr())
 paper_cp = ((lam + (k + g) / 4) ** 2 - (16 * G**2 + (k - g) ** 2) / 16) ** 2
-print("    det(A - lambda I) - paper_form =", sp.simplify(sp.factor(sp.expand(cp) - sp.expand(paper_cp))))
+print("    det(A - lambda I) - expected form =", sp.simplify(sp.factor(sp.expand(cp) - sp.expand(paper_cp))))
 diffnum = (cp - paper_cp).subs({k: 0.37, g: 0.11, G: 0.21, lam: 0.53})
 print("    numerical spot check:", float(diffnum))
 
@@ -62,7 +55,7 @@ print("\nA4. critical-eigenvalue slope: lambda_+ = -2 sqrt(kg)/(k+g) delta + O(d
 dlt = sp.symbols("delta", positive=True)
 slope = sp.diff(lp, G).subs(G, Gth).subs(sp.sqrt(4 * k * g + (k - g) ** 2), k + g)
 coeff = sp.simplify(slope)
-print("    d(lambda_+)/dG at Gth =", coeff, "  (paper: 2 sqrt(kg)/(k+g))")
+print("    d(lambda_+)/dG at Gth =", coeff, "  (expected 2 sqrt(kg)/(k+g))")
 print("    difference:", sp.simplify(coeff - 2 * sp.sqrt(k * g) / (k + g)))
 
 print("\nA5. asymptotic sigma = Sigma/delta + O(1);  a, b, c coefficients")
@@ -78,10 +71,10 @@ print("    a - a_paper =", sp.simplify(a_num - a_paper))
 print("    b - b_paper =", sp.simplify(b_num - b_paper))
 print("    c - c_paper =", sp.simplify(c_num - c_paper))
 
-print("\nA6. rank two: a*b - c^2 = 0 (eq:purity / eq:abcheck)")
+print("\nA6. rank two: a*b - c^2 = 0")
 print("    a*b - c^2 =", sp.simplify(a_paper * b_paper - c_paper**2))
 
-print("\nA7. entropy-production coefficient (eq:CPi)")
+print("\nA7. entropy-production coefficient")
 CPi_paper = g**sp.Rational(3, 2) * sp.sqrt(k) * (n + 1) ** 2 / ((1 + g / k) * (2 * n + 1))
 lhs = 2 * k * a_paper + g * b_paper / (n + sp.Rational(1, 2))
 print("    2*kappa*a + gamma*b/(n+1/2) - C_Pi =", sp.simplify(lhs - CPi_paper))
@@ -110,7 +103,7 @@ print("    kappa^2 a/dd + gamma^2 b/db - C_Pi-general =", sp.simplify(CPg_lhs - 
 red = sp.simplify(CPg_paper.subs([(dd, k / 2), (db, g * (n + sp.Rational(1, 2)))]) - CPi_paper)
 print("    C_Pi-general reduced to standard case:", red)
 
-print("\nA9. red sideband: eigenvalues (eq:red first statement)")
+print("\nA9. red sideband: purely imaginary eigenvalue pairs")
 Ar = A_sym("red")
 ev = sp.factor(Ar.charpoly(lam).as_expr())
 print("    char.poly (red) =", ev)
@@ -127,13 +120,7 @@ pinv = MK.pinv()
 Cq = sp.simplify(vecS.T * pinv * vecS)
 print("    1/2 vec(S)^T pinv(S kron S) vec(S) =", Cq, " (Lemma 1 predicts r/2 =", M2.rank() / 2, ")")
 
-# =====================================================================
-# PART B -- 60-digit mpmath
-# =====================================================================
-print()
-print("#" * 72)
-print("# PART B: 60-digit mpmath")
-print("#" * 72)
+# B. 60-digit mpmath
 
 def kron(a, b):
     m, n_ = a.rows, a.cols
@@ -264,10 +251,10 @@ for i in range(4):
 Cq = mp.mpf("0.5") * (v.T * pinv_sym(MK) * v)[0]
 print(f"    C = {mp.nstr(Cq, 12)}   (Lemma 1: r/2 = 1)")
 
-print("\nB3. F_G delta^2 -> 1 and subleading c1 (paper: c1 ~= 0.79 for kappa=0.1, g=1e-4, n=100)")
+print("\nB3. F_G delta^2 -> 1 and subleading c1 (expect c1 ~= 0.79 for kappa=0.1, g=1e-4, n=100)")
 for (k_, g_, n_, note) in [(mp.mpf("0.1"), mp.mpf("1e-4"), mp.mpf(100), "main params"),
                            (mp.mpf(1), mp.mpf(1), mp.mpf(5), "symmetric params"),
-                           (mp.mpf("0.3"), mp.mpf("3e-3"), mp.mpf(50), "third set (T9)")]:
+                           (mp.mpf("0.3"), mp.mpf("3e-3"), mp.mpf(50), "(0.3, 3e-3, 50)")]:
     Gth_ = mp.sqrt(k_ * g_) / 2
     for eta in [mp.mpf("1e-6"), mp.mpf("1e-8")]:
         dlt_ = eta * Gth_
@@ -285,7 +272,7 @@ for eta in [mp.mpf("1e-5"), mp.mpf("1e-8")]:
     claimed = k0 * (n0 + 1) * mp.sqrt(k0 * g0) / (4 * (k0 + g0) * dlt_)
     print(f"    eta={mp.nstr(eta,3)}:  n_b exact = {mp.nstr(nb, 10)},  paper formula = {mp.nstr(claimed, 10)},  rel.diff = {mp.nstr(abs(nb-claimed)/nb, 2)}")
 
-print("\nB5. trade-off constant F/Pi^2 (eq:tradeoff)")
+print("\nB5. trade-off constant F/Pi^2")
 ref = (1 + g0 / k0) ** 2 * (2 * n0 + 1) ** 2 / (k0 * g0**3 * (n0 + 1) ** 4)
 for eta in [mp.mpf("1e-5"), mp.mpf("1e-7")]:
     dlt_ = eta * Gth0
@@ -295,7 +282,7 @@ for eta in [mp.mpf("1e-5"), mp.mpf("1e-7")]:
     P_ = Pi_mp(S_, k0, g0, n0)
     print(f"    eta={mp.nstr(eta,3)}:  F/Pi^2 = {mp.nstr(F/P_**2, 10)},  closed form = {mp.nstr(ref, 10)},  rel.diff = {mp.nstr(abs(F/P_**2-ref)/ref, 2)}")
 
-print("\nB6. red sideband Pi -> closed form at large G (eq:red)")
+print("\nB6. red sideband Pi -> closed form at large G")
 Gth_r = Gth0
 for Gr in [mp.mpf(50), mp.mpf(200)]:
     # red drift
@@ -327,13 +314,7 @@ for Gr in [mp.mpf(50), mp.mpf(200)]:
     P_ = Pi_mp(Sr, k0, g0, n0)
     print(f"    G={Gr}:  n_d = {mp.nstr(nd, 8)} (limit {mp.nstr(g0*n0/(k0+g0), 8)}),  Pi = {mp.nstr(P_, 8)},  closed form = {mp.nstr(CP_red, 8)}")
 
-# =====================================================================
-# PART C -- dataset claims (double precision, same sweep as the figures)
-# =====================================================================
-print()
-print("#" * 72)
-print("# PART C: dataset claims")
-print("#" * 72)
+# C. dataset claims (double precision, same sweep as the figures)
 from scipy.linalg import solve_continuous_lyapunov
 
 def A_full(side, G_, k_, g_):
@@ -384,12 +365,12 @@ print("\nC1. red-sideband claims: max F = 4.7e5, max Pi = 9.8e-3, 3 orders below
 print(f"    max F_red = {Fr.max():.3e}   max Pi_red = {Pr.max():.3e}")
 print(f"    F_blue(0.985 Gth) = {Fb[-1]:.3e}   ratio F_blue/F_red_max = {Fb[-1]/Fr.max():.2e}")
 
-print("\nC2. fitted exponents F ~ Pi^alpha, windows top 1/3, 1/10, 1/20 (paper: 1.75, 1.91, 1.94)")
+print("\nC2. fitted exponents F ~ Pi^alpha, windows top 1/3, 1/10, 1/20 (expect 1.75, 1.91, 1.94)")
 for frac, ref in [(3, 1.75), (10, 1.91), (20, 1.94)]:
     m = len(Fb) // frac
     x = Pb[-m:]; y = Fb[-m:]
     c = np.polyfit(np.log(x), np.log(y), 1)
-    print(f"    top 1/{frac}: alpha = {c[0]:.3f}  (paper {ref})")
+    print(f"    top 1/{frac}: alpha = {c[0]:.3f}")
 
 print("\nC3. F vs (Gth - G) exponent in narrowest windows (table: -2.10)")
 for npts in [20, 10, 6, 3]:
@@ -407,7 +388,7 @@ print("\nC5. n_b at delta/Gth = 1.5e-2 for Verhagen-like scaling claim (~1e3 wit
 eta = 1.5e-2
 nb_claim = kD * (nD + 1) * np.sqrt(kD * gD) / (4 * (kD + gD) * eta * GthD) * GthD  # careful: formula uses delta
 nb_claim = kD * (nD + 1) * np.sqrt(kD * gD) / (4 * (kD + gD) * (eta * GthD))
-print(f"    n_b = {nb_claim:.3e}  (paper: 'of order 1e3')")
+print(f"    n_b = {nb_claim:.3e}  (order 1e3 expected)")
 # same with the Verhagen rates
 kv, gv = 0.6 / 3.7, 0.1 / 3.7e6
 nbv = kv * 101 * np.sqrt(kv * gv) / (4 * (kv + gv) * (eta * np.sqrt(kv * gv) / 2))

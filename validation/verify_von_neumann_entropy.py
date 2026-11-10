@@ -1,16 +1,10 @@
-# -*- coding: utf-8 -*-
 """
-von Neumann versus Wigner entropy near the threshold.
-
-Verifies, for the blue-sideband steady state:
-  (i)  the symplectic eigenvalues: nu_+ = (1-r)(n+1)/(2(1+r) eps) + O(1),
-       nu_- -> 1/2 + const;
-  (ii) both S_vN and S_W grow as ln(1/eps) with the same unit slope;
-  (iii) hence any entropy-production measure whose flux tracks these
-        entropies inherits the 1/delta divergence of Pi; the EXPONENT of
-        the trade-off law is convention-independent, while the constant
-        is defined with respect to the Wigner version (the von Neumann
-        version is singular for a zero-temperature optical bath).
+Symplectic eigenvalues and the growth of S_vN and S_W near the threshold,
+for the blue-sideband steady state.  Near G_th,
+  nu_+ = (1-r)(n+1)/(2(1+r) eps) + O(1),  nu_- -> 1/2 + const,
+and both entropies grow as ln(1/eps) with the same slope, so the exponent of
+the trade-off law is entropy-convention independent (the constant is the
+Wigner one; the von Neumann version is singular for a T=0 optical bath).
 """
 
 import mpmath as mp
@@ -67,8 +61,7 @@ for epsv in [mp.mpf('1e-1'), mp.mpf('1e-2'), mp.mpf('1e-3'), mp.mpf('1e-4'),
           f"{mp.nstr(S_vN,6):>10s} {mp.nstr(S_W,6):>10s}")
     data.append((epsv, S_vN, S_W))
 
-# slopes of S vs ln(1/eps): expect ~1 for both entropies
-print("\nslope of S_vN and S_W vs ln(1/eps) (linear fit over the four smallest eps):")
+print("\nslopes of S_vN and S_W vs ln(1/eps) (fit over the four smallest eps):")
 for idx, name in ((1, 'S_vN'), (2, 'S_W')):
     xs = [mp.log(1/e) for (e, *_r) in data[-4:]]
     ys = [row[idx] for row in data[-4:]]
@@ -77,8 +70,5 @@ for idx, name in ((1, 'S_vN'), (2, 'S_W')):
     slope = sum((x-xm)*(y-ym) for x, y in zip(xs, ys))/sum((x-xm)**2 for x in xs)
     print(f"  {name}: slope = {mp.nstr(slope, 6)}")
 
-print("\ninterpretation: both entropies diverge as ln(1/eps) with the same slope,")
-print("so the entropy FLUXES (hence any production measure in the steady state)")
-print("diverge as 1/eps, tracking Pi; the exponent alpha=2 of the trade-off law")
-print("is entropy-convention independent, while the constant (26) is the Wigner")
-print("version (the von Neumann version with a T=0 optical bath is singular).")
+print("\nboth entropies diverge as ln(1/eps) with the same slope: the exponent of")
+print("the trade-off law is convention independent; the constant is the Wigner one.")
