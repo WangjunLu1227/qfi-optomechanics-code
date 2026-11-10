@@ -1,16 +1,12 @@
-"""rank2_structure.py
+"""
+Rank-two structure of Sigma = lim_{delta->0} delta*sigma_ss.
 
-Rank-two structure of the rescaled steady state Sigma:
+Part (A): symbolic proof that a*b - c^2 = 0 for the RWA blue-sideband steady
+state with an arbitrary diagonal diffusion D = diag(d1,d1,d2,d2), i.e. the
+rank-two structure does not depend on the bath occupations.
 
-(A) symbolic proof that the rank-two structure of Sigma = lim_{delta->0} delta*sigma
-    does NOT depend on the bath occupations: with D = diag(d1,d1,d2,d2) arbitrary,
-    the RWA blue-sideband steady state has a * b - c^2 = 0 identically.
-
-(B) refined numerics for the counter-rotating (non-RWA) terms:
-    - the linear coefficient of the critical eigenvalue,
-    - the eigenvalue scaling of delta*sigma (which shows how many directions
-      vanish at which order),
-    - F*delta^2 for a sequence of delta.
+Part (B): numerics for the counter-rotating (non-RWA) terms: linear coefficient
+of the critical eigenvalue, eigenvalue scaling of delta*sigma, F*delta^2.
 """
 
 import mpmath as mp
@@ -18,12 +14,7 @@ import sympy as sp
 
 mp.mp.dps = 60
 
-# ======================================================================
-# (A)  symbolic:  rank-two independence of the bath occupations
-# ======================================================================
-print("=" * 78)
-print("(A) symbolic check with an arbitrary diagonal diffusion matrix")
-print("=" * 78)
+# (A) symbolic: rank-two independence of the bath occupations
 
 G, k, g, d1, d2 = sp.symbols('G kappa gamma d1 d2', positive=True)
 d = sp.symbols('delta', positive=True)
@@ -67,19 +58,18 @@ print("    a =", sp.simplify(a_lead))
 print("    b =", sp.simplify(b_lead))
 print("    c =", sp.simplify(c_lead))
 print("\n  a*b - c^2 =", sp.factor(sp.simplify(a_lead * b_lead - c_lead ** 2)))
-# sanity: with d1 = k/2, d2 = g(n+1/2) this must reproduce the paper values
+# sanity: with d1 = k/2, d2 = g(n+1/2) this reproduces the closed forms
 n = sp.symbols('n', positive=True)
 chk_a = sp.simplify(a_lead.subs({d1: k / 2, d2: g * (n + sp.Rational(1, 2))}))
 chk_b = sp.simplify(b_lead.subs({d1: k / 2, d2: g * (n + sp.Rational(1, 2))}))
 chk_c = sp.simplify(c_lead.subs({d1: k / 2, d2: g * (n + sp.Rational(1, 2))}))
 print("\n  with d1 = kappa/2, d2 = gamma_m(n_th+1/2):")
-print("    a =", sp.simplify(chk_a), "  (paper: gamma_m^{3/2} sqrt(kappa)(n+1)/(4(kappa+gamma_m)))")
+print("    a =", sp.simplify(chk_a))
 print("    b =", sp.simplify(chk_b))
 print("    c =", sp.simplify(chk_c))
 
-# ======================================================================
-# (B)  refined non-RWA numerics
-# ======================================================================
+# (B) non-RWA numerics
+
 N = 4
 OM = mp.matrix(N, N)
 for i in (0, 2):
@@ -156,9 +146,7 @@ D = mp.diag([k / 2, k / 2, g * (nth + mp.mpf('0.5')), g * (nth + mp.mpf('0.5'))]
 Airr = A_irr(k, g)
 
 print()
-print("=" * 78)
-print("(B) non-RWA: critical eigenvalue and the scaling of delta*sigma")
-print("=" * 78)
+print("non-RWA: critical eigenvalue and scaling of delta*sigma")
 for ratio in ('0.4', '0.2', '0.1', '0.05', '0.02'):
     r = mp.mpf(ratio)
     w = k / r

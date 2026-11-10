@@ -1,27 +1,12 @@
-# -*- coding: utf-8 -*-
 """
-Closed-form analytic layer of the model used in the paper:
+Closed-form steady state of the linearized blue-sideband (two-mode squeezing)
+model, and near-threshold expansions of the occupations n_d, n_b, the entropy
+production rate Pi, the symplectic eigenvalues, d(sigma)/dG and the Gaussian
+QFI (mpmath).
 
-Closed-form steady state sigma_ss of the linearized blue-sideband
-(su(1,1) / two-mode-squeezing) optomechanical model, and the strict
-near-threshold expansion of the entropy production rate Pi, the
-steady-state occupations, the symplectic eigenvalues, d(sigma)/dG,
-and the Gaussian QFI F_G.
-
-Conventions (identical to demo_entropy_qfi.py):
-  [q,p] = i, vacuum sigma = I/2, hbar = 1
-  dsigma/dt = A sigma + sigma A^T + D
-  quadrature order u = (x_d, p_d, x_b, p_b)
-  blue: A_H = [[0,0,0,-G],[0,0,-G,0],[0,-G,0,0],[-G,0,0,0]]
-  D = diag(k/2, k/2, g(n+1/2), g(n+1/2))
-  threshold G_th = sqrt(k*g)/2
-
-Outputs:
-  - symbolic steady state (printed)
-  - critical eigenvalue and its expansion
-  - leading asymptotics: n_d, n_b, Pi, symplectic eigenvalues,
-    d(sigma)/dG, QFI coefficient (mpmath)
-  - final claim check: F_G / Pi^2 -> constant
+Conventions:  quadratures u = (x_d, p_d, x_b, p_b), [q,p] = i, vacuum
+sigma = I/2, hbar = 1, dsigma/dt = A sigma + sigma A^T + D, threshold
+G_th = sqrt(k*g)/2.
 """
 
 import sympy as sp
@@ -50,17 +35,14 @@ D = sp.diag(k/2, k/2, g*(nth + sp.Rational(1, 2)), g*(nth + sp.Rational(1, 2)))
 
 AIRR = sp.diag(-k/2, -k/2, -g/2, -g/2)
 
-# ------------------------------------------------------------------
-# 1. steady state: solve A S + S A^T + D = 0
-# ------------------------------------------------------------------
+# steady state: solve A S + S A^T + D = 0
 E = A_BLUE * S + S * A_BLUE.T + D
 eqs = [sp.expand(E[i, j]) for i in range(4) for j in range(i, 4)]
 sol = sp.solve(eqs, unk, dict=True)[0]
 SS = S.subs(sol)
 for e in unk:
     SS = sp.simplify(SS)
-print("=" * 72)
-print("Steady-state covariance (blue sideband), symbolic:")
+print("Steady-state covariance (blue sideband):")
 for (i, j) in [(0, 0), (0, 1), (0, 2), (0, 3), (1, 1), (1, 2), (1, 3),
                (2, 2), (2, 3), (3, 3)]:
     print(f"  sigma[{i},{j}] = {sp.simplify(SS[i, j])}")
@@ -69,9 +51,7 @@ for (i, j) in [(0, 0), (0, 1), (0, 2), (0, 3), (1, 1), (1, 2), (1, 3),
 res = sp.simplify(A_BLUE * SS + SS * A_BLUE.T + D)
 print("Lyapunov residual (max abs entry):", res)
 
-# ------------------------------------------------------------------
-# 2. critical eigenvalue of A
-# ------------------------------------------------------------------
+# critical eigenvalue of A
 lam = list(A_BLUE.eigenvals().keys())
 print("\nEigenvalues of A (raw):", lam)
 lam_c = sp.simplify(-sp.Rational(1, 4)*(k + g) + sp.sqrt(G**2 + (k - g)**2/16))
@@ -79,10 +59,7 @@ print("critical eigenvalue candidate:", sp.simplify(lam_c))
 check = sp.simplify((A_BLUE - lam_c*sp.eye(4)).det())
 print("det(A - lam_c) = 0 ?", check == 0, check)
 
-# ------------------------------------------------------------------
-# 3. nondimensionalize: k -> 1, r = g/k, eps = (G_th - G)/G_th
-#    G_th = sqrt(r)/2  (in units of k)
-# ------------------------------------------------------------------
+# nondimensionalize: k -> 1, r = g/k, eps = (G_th - G)/G_th
 r, eps = sp.symbols('r eps', positive=True)
 subs_dim = {k: 1, g: r, G: sp.sqrt(r)/2*(1 - eps)}
 SS_d = sp.simplify(SS.subs(subs_dim))
@@ -93,8 +70,7 @@ def series(expr, order=3):
 n_d = sp.simplify((SS_d[0, 0] + SS_d[1, 1])/2 - sp.Rational(1, 2))
 n_b = sp.simplify((SS_d[2, 2] + SS_d[3, 3])/2 - sp.Rational(1, 2))
 
-print("\n" + "=" * 72)
-print("Near-threshold expansions (dimensionless, eps = (G_th-G)/G_th):")
+print("\nNear-threshold expansions (dimensionless, eps = (G_th-G)/G_th):")
 print("  n_d   ~", series(n_d))
 print("  n_b   ~", series(n_b))
 
@@ -137,11 +113,8 @@ print("\n  d sigma/dG leading entries:")
 for (i, j) in [(0, 0), (0, 1), (0, 3), (1, 2), (2, 2), (3, 3)]:
     print(f"   d sigma[{i},{j}]/dG ~", series(dSS_dG[i, j]))
 
-# ------------------------------------------------------------------
-# 4. QFI coefficient via mpmath at tiny eps (analytic sigma and dsigma)
-# ------------------------------------------------------------------
-print("\n" + "=" * 72)
-print("QFI asymptotic coefficient (mpmath, using closed forms):")
+# QFI coefficient via mpmath at tiny eps (analytic sigma and dsigma)
+print("\nQFI asymptotic coefficient (mpmath, closed forms):")
 
 # SS_d(r, eps): sigma as a function of the dimensionless ratio r = g/k
 # and eps = (G_th - G)/G_th, with G_th = sqrt(r)/2 in units of kappa.
@@ -191,7 +164,7 @@ def Pi_num(sig, rval, nv):
     t3 = 0.5*mp.trace(Di * sig**-1)
     return t1 + t2 + t3
 
-# --- cross-check of qfi_mp against the numpy Banchi implementation ---
+# cross-check of qfi_mp against a numpy implementation of the same formula
 import numpy as np
 
 OMEGA_NP = np.zeros((4, 4))
@@ -262,11 +235,8 @@ print("  predicted (2n+1)^2/(n+1)^4 ratios:",
 rn = [ratio_float(rv, 100) for rv in ('1e-2', '1e-3', '1e-4')]
 print("  ratio vs r (n=100):", [f"{v:.6e}" for v in rn])
 
-# ------------------------------------------------------------------
-# 5. red sideband: saturation statements
-# ------------------------------------------------------------------
-print("\n" + "=" * 72)
-print("Red sideband (beam splitter) — saturation check:")
+# red sideband: saturation statements
+print("\nRed sideband (beam splitter):")
 A_RED = sp.Matrix([[-k/2, 0,   0,   G],
                    [0,   -k/2, -G,  0],
                    [0,    G,   -g/2, 0],
@@ -294,11 +264,8 @@ print("  lim_{G->oo} d(sigma)/dG (red), entrywise:")
 for (i, j) in [(0, 0), (0, 3), (2, 2), (3, 0)]:
     print(f"    [{i},{j}] ->", sp.simplify(sp.limit(dSSr[i, j], G, sp.oo)))
 
-# ------------------------------------------------------------------
-# 6. numeric symplectic eigenvalue check near threshold
-# ------------------------------------------------------------------
-print("\n" + "=" * 72)
-print("Numeric symplectic eigenvalues (r=1e-3, n=100):")
+# numeric symplectic eigenvalues near threshold
+print("\nNumeric symplectic eigenvalues (r=1e-3, n=100):")
 import numpy.linalg as npl
 Om_np = np.array([[0, 1, 0, 0], [-1, 0, 0, 0], [0, 0, 0, 1], [0, 0, -1, 0]], dtype=complex)
 for epsv in (mp.mpf('1e-3'), mp.mpf('1e-6')):

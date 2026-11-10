@@ -1,17 +1,12 @@
-# -*- coding: utf-8 -*-
 """
-Reduction of the universal coefficient: F*delta^2 -> 1 near threshold.
+F delta^2 -> 1 near threshold.
 
-Two ingredients:
-  Sigma = lim_{delta->0} delta * sigma_ss(G_th - delta)      (rank-deficient)
-  V     = lim_{delta->0} delta^2 * d(sigma_ss)/dG|_{G_th-delta}
-Then, since sigma ~ Sigma/delta and d(sigma)/dG ~ V/delta^2, and
-M = sigma (x) sigma - Omega (x) Omega/4 ~ (Sigma (x) Sigma)/delta^2,
+Sigma = lim delta*sigma_ss(G_th - delta)   (rank-deficient)
+V     = lim delta^2 d(sigma_ss)/dG
 
-    F * delta^2  ->  1/2 vec(V)^T (Sigma (x) Sigma)^{-1P} vec(V).
-
-We evaluate this exactly (rational arithmetic where possible) for several
-(r, n_th) and check it equals 1.
+sigma ~ Sigma/delta and dsigma/dG ~ V/delta^2, so
+    F delta^2 -> 1/2 vec(V)^T (Sigma (x) Sigma)^{-1P} vec(V),
+evaluated exactly (rational arithmetic) for several (r, n_th).
 """
 
 import sympy as sp
@@ -41,20 +36,20 @@ dSS_d = sp.diff(SS, G).subs(G, Gth - d)
 
 Sigma = sp.zeros(4, 4)
 V = sp.zeros(4, 4)
-print("=== Sigma = lim delta*sigma ===")
+print("Sigma = lim delta*sigma:")
 for i in range(4):
     for j in range(4):
         Sigma[i, j] = sp.simplify(sp.limit(d*SS_d[i, j], d, 0))
         V[i, j] = sp.simplify(sp.limit(d**2*dSS_d[i, j], d, 0))
         if Sigma[i, j] != 0:
             print(f"  Sigma[{i},{j}] =", Sigma[i, j])
-print("=== V = lim delta^2*d(sigma)/dG ===")
+print("V = lim delta^2 d(sigma)/dG:")
 for i in range(4):
     for j in range(4):
         if V[i, j] != 0:
             print(f"  V[{i},{j}] =", sp.simplify(V[i, j]))
 
-# --- 1) exact rational check of the algebraic identity ---
+# exact rational check of the algebraic identity
 def coeff_matrix(rv, nv):
     sub = {k: 1, g: rv, nth: nv}
     Sig = sp.Matrix(4, 4, lambda i, j: sp.nsimplify(Sigma[i, j].subs(sub)))
@@ -71,7 +66,7 @@ def algebraic_value(Sig, Vm):
     val = sp.Rational(1, 2) * (v.T * Mp * v)[0]
     return sp.nsimplify(sp.simplify(val))
 
-print("\n=== exact (rational) evaluation of 1/2 vec(V)^T (Sigma(x)Sigma)^-1P vec(V) ===")
+print("\nexact evaluation of 1/2 vec(V)^T (Sigma(x)Sigma)^-1P vec(V):")
 for (rv, nv) in [(sp.Rational(1, 10 ** 3), 100),
                  (sp.Rational(1, 10 ** 2), 10),
                  (sp.Rational(1, 10 ** 4), 1000)]:
@@ -79,8 +74,8 @@ for (rv, nv) in [(sp.Rational(1, 10 ** 3), 100),
     val = algebraic_value(Sig, Vm)
     print(f"  r = {rv}, n_th = {nv}:  F*delta^2 (limit) = {val}")
 
-# --- 2) closed forms of Sigma and V in terms of (k, g, n) for the appendix ---
-print("\n=== compact closed forms (k=1 gauge kept symbolic) ===")
+# closed forms of Sigma and V in terms of (k, g, n), for the appendix
+print("\nclosed forms (k = 1):")
 for (i, j) in [(0, 0), (2, 2), (0, 3)]:
     print(f"  Sigma[{i},{j}] =", sp.simplify(Sigma[i, j]))
 for (i, j) in [(0, 0), (2, 2), (0, 3)]:
