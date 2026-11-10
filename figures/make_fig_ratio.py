@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """
-Convergence figure for the analytic layer: the dimensionless combinations
-  F * delta^2  ->  1                       (universal, parameter-free)
-  Pi * delta   ->  C_Pi = gamma^{3/2} sqrt(kappa) (n+1)^2 / ((1+r)(2n+1))
-  F / Pi^2     ->  (1+r)^2 (2n+1)^2 / (kappa gamma^3 (n+1)^4)
-plotted against G/G_th from the sweep data (sweep_data.csv).
+Figure 2: convergence of the rescaled combinations
+    F * delta^2  ->  1
+    Pi * delta   ->  C_Pi = gamma^{3/2} sqrt(kappa) (n+1)^2 / ((1+r)(2n+1))
+    F / Pi^2     ->  (1+r)^2 (2n+1)^2 / (kappa gamma^3 (n+1)^4)
+against G/G_th, from sweep_data.csv.
 """
 
 import numpy as np
@@ -45,7 +44,7 @@ plt.rcParams.update({
     "xtick.top": True, "ytick.right": True,
     "figure.dpi": 300,
 })
-TW = 5.46                      # = \textwidth of the MDPI Entropy layout (inch)
+TW = 5.46                      # text width of the MDPI layout (inch)
 fig, axes = plt.subplots(2, 1, figsize=(TW, 5.5))
 
 # (a) F*delta^2 -> 1 and Pi*delta -> C_Pi
@@ -76,11 +75,11 @@ ax.legend(loc="upper right", framealpha=1.0, frameon=True)
 fig.tight_layout()
 figpath = os.path.join(OUT, "fig_ratio.png")
 fig.savefig(figpath, dpi=300)
-fig.savefig(os.path.join(OUT, "fig_ratio.pdf"))   # vector version for the paper
+fig.savefig(os.path.join(OUT, "fig_ratio.pdf"))   # vector version
 print("figure saved:", figpath)
 
-# report the C_F correction coefficient from the near-threshold window
-# (the universal limit F*delta^2 -> 1 is approached only as G -> G_th)
+# correction coefficient from the near-threshold window
+# (F*delta^2 -> 1 is approached only as G -> G_th)
 m = slice(-12, None)
 cf = (F * delta**2)[m]
 print("C_F range near threshold:", cf.min(), "..", cf.max())

@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-"""Figure 1 of the paper: precision versus thermodynamic cost (no fitted power laws).
-
-Panel (a): F_G, Pi, n_b vs G/G_th, legend moved out of the data.
-Panel (b): all swept points shown in the (Pi, F_G) plane; the only line drawn
-for the blue sideband is the ANALYTIC asymptote F = Pi^2 / C_Pi^2 (slope 2,
-closed-form constant, no fit); the red sideband sweep is extended to 20 G_th so
-that the saturation of Pi_red and the decay of F_red are visible; no red fit.
-"""
+"""Figure 1: F_G, Pi, n_b versus G/G_th, and the (Pi, F_G) plane with the
+analytic asymptote F = Pi^2 / C_Pi^2 for the blue sideband (no fit).  The red
+sideband sweep is extended to 20 G_th to show the saturation of Pi_red."""
 import csv
 import os
 
@@ -51,7 +45,7 @@ def entropy_production(sigma):
             + 2.0 * np.trace(A_IRR.T @ Dinv @ A_IRR @ sigma)
             + 0.5 * np.trace(np.linalg.inv(sigma) @ D))
 
-# ---- load the existing sweep (blue and red, G in [0.02, 0.985] G_th) --------
+# load the existing sweep
 rows = []
 with open(os.path.join(OUT, "sweep_data.csv"), newline="", encoding="utf-8") as f:
     for row in csv.DictReader(f):
@@ -64,7 +58,7 @@ for side, G, F, Pi in rows:
 for side in data:
     data[side].sort()
 
-# ---- extend the red sideband to 20 G_th -------------------------------------
+# extend the red sideband to 20 G_th
 G_red_extra = G_th * np.geomspace(0.995, 20.0, 30)
 for G in G_red_extra:
     A = A_full(G, "red")
@@ -86,7 +80,7 @@ Pr = np.array([p[2] for p in data["red"]])
 print(f"red extended: G/G_th {Gr.min()/G_th:.3f}..{Gr.max()/G_th:.2f}, "
       f"Pi {Pr.min():.2e}..{Pr.max():.2e}, F {Fr.min():.2e}..{Fr.max():.2e}")
 
-# ---- figure ------------------------------------------------------------------
+# figure
 plt.rcParams.update({
     "font.family": "serif",
     "font.serif": ["Times New Roman", "Liberation Serif", "DejaVu Serif"],

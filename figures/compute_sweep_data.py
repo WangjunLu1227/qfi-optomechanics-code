@@ -1,37 +1,8 @@
-# -*- coding: utf-8 -*-
 """
-Numerical proof-of-concept for the Entropy proposal:
-"Entropy-production constraints on quantum Fisher information in
-blue-sideband (su(1,1)) optomechanical dynamics".
-
-Model: linearized two-mode Gaussian dynamics (cavity mode d + mechanical mode b),
-rotating frame, RWA.
-
-  Blue sideband (su(1,1) / two-mode squeezing):
-      H_b = G (d^dagger b^dagger + d b) = G (q_d q_b - p_d p_b)
-      -> threshold G_th = sqrt(kappa*gamma)/2
-  Red sideband (beam-splitter, for contrast):
-      H_r = G (d b^dagger + d^dagger b) = G (q_d q_b + p_d p_b)
-
-Conventions ([q,p] = i, vacuum sigma = I/2, hbar = 1):
-  dsigma/dt = A sigma + sigma A^T + D
-  D = diag(kappa/2, kappa/2, gamma*(n_th+1/2), gamma*(n_th+1/2))
-  A = A_H(G) - diag(kappa/2, kappa/2, gamma/2, gamma/2)
-
-Entropy production rate (unconditional, zero mean), Belenchia, Mancino,
-Landi & Paternostro, npj Quantum Information 6, 97 (2020), arXiv:1908.09382: 
-  Pi = 2 Tr[A_irr] + 2 Tr[A_irr^T D^{-1} A_irr sigma] + (1/2) Tr[sigma^{-1} D]
-with A_irr the irreversible (diagonal damping) part of A.
-
-Gaussian QFI (zero mean), Banchi, Braunstein, Pirandola, PRL 115, 260501 (2015):
-  F = (1/2) vec(d sigma)^T M^{-1} vec(d sigma),
-  M = sigma (x) sigma - (Omega (x) Omega)/4,  column-major vec, pseudo-inverse.
-
-Output (same directory):
-  sweep_data.csv          raw sweep data used by the paper figures
-
-This script only produces the data; the figures of the paper are drawn by
-make_fig_tradeoff_rev.py and make_fig_ratio.py from this CSV.
+Generate sweep_data.csv: steady-state QFI, entropy production and occupations
+over G in [0.02, 0.985] G_th for both sidebands (kappa=0.1, gamma=1e-4,
+n_th=100).  The figures are drawn from this CSV by make_fig_tradeoff.py and
+make_fig_ratio.py.
 """
 
 import numpy as np
@@ -43,9 +14,7 @@ import os
 
 OUT = os.path.dirname(os.path.abspath(__file__))
 
-# ----------------------------------------------------------------------
-# Model building blocks
-# ----------------------------------------------------------------------
+# model building blocks
 # quadrature ordering: u = (x_d, p_d, x_b, p_b)
 OMEGA = np.zeros((4, 4))
 OMEGA[0, 1] = 1.0; OMEGA[1, 0] = -1.0   # mode d
@@ -137,13 +106,9 @@ def var_X(sigma):
     val = (W(0, 2, 0, 2) - W(0, 2, 1, 3) - W(1, 3, 0, 2) + W(1, 3, 1, 3))
     return val.real  # <X> = 0 identically (X generates the evolution itself)
 
-# ----------------------------------------------------------------------
-# Validation 1: pure-state unitary family vs Banchi formula
-#   kappa, gamma -> 0 : state = TMS squeezed vacuum, F = 4 t^2 Var(X(t))
-# ----------------------------------------------------------------------
-print("=" * 68)
+# validation 1: pure-state unitary family vs the QFI formula
+# kappa, gamma -> 0 : state = TMS squeezed vacuum, F = 4 t^2 Var(X(t))
 print("Validation 1: pure-state unitary family  F =? 4 t^2 Var(X)")
-print("=" * 68)
 kappa_v, gamma_v = 1e-8, 1e-8
 G_v, t_v = 0.3, 1.0
 A_pure = A_H(G_v, "blue")
@@ -160,13 +125,8 @@ print(f"  4 t^2 Var(X)  = {F_target:.6f}")
 print(f"  Banchi QFI    = {F_num:.6f}")
 print(f"  ratio         = {F_num / F_target:.4f}")
 
-# ----------------------------------------------------------------------
-# Validation 2: entropy production >= 0 during thermal relaxation, -> 0 at eq.
-#   G = 0, initial squeezed optical state, relaxes to thermal equilibrium
-# ----------------------------------------------------------------------
-print("=" * 68)
+# validation 2: entropy production >= 0 during thermal relaxation
 print("Validation 2: Pi(t) >= 0 during relaxation to equilibrium (G = 0)")
-print("=" * 68)
 kappa_0, gamma_0, nth_0 = 0.5, 0.05, 20.0
 A_IRR = np.diag([-kappa_0 / 2, -kappa_0 / 2, -gamma_0 / 2, -gamma_0 / 2])
 A_eq = A_full(0.0, "blue", kappa_0, gamma_0)
@@ -188,12 +148,7 @@ print("  Pi(t)     :", np.array2string(Pi_vals, precision=5))
 print(f"  min Pi    = {Pi_vals.min():.3e}  (must be >= 0)")
 print(f"  final Pi  = {Pi_vals[-1]:.3e}  (must be ~ 0)")
 
-# ----------------------------------------------------------------------
-# Main sweep: steady state, blue vs red sideband
-# ----------------------------------------------------------------------
-print("=" * 68)
-print("Main sweep: steady-state QFI and entropy production")
-print("=" * 68)
+# main sweep: steady state, blue vs red sideband
 kappa, gamma, nth = 0.1, 1e-4, 100.0
 G_th = np.sqrt(kappa * gamma) / 2.0
 print(f"  kappa = {kappa}, gamma = {gamma}, n_th = {nth}")
