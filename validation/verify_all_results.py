@@ -1,7 +1,8 @@
 """
 Checks of the paper results in three arithmetics:
 A1-A10  SymPy (closed forms, charpoly, asymptotics, C_Pi)
-B1-B6   60-digit mpmath (mechanism eq, eq:C, c1, n_b, trade-off, red sideband)
+B1-B6   60-digit mpmath (mechanism equation, the Sigma identity, c1, n_b,
+        trade-off, red sideband)
 C1-C5   double precision, same sweep as the figures
 """
 import numpy as np
@@ -231,7 +232,7 @@ err = max(abs(Sig_pred[i, j] - Sig_exact[i, j]) for i in range(4) for j in range
 scale = max(abs(Sig_exact[i, j]) for i in range(4) for j in range(4))
 print(f"    max |pred-exact| = {mp.nstr(err, 3)}   scale = {mp.nstr(scale, 3)}   rel = {mp.nstr(err/scale, 3)}")
 
-print("\nB2. eq:C : 1/2 vec(Sigma)^T pinv(Sigma kron Sigma) vec(Sigma) = 1 (exact Sigma)")
+print("\nB2. 1/2 vec(Sigma)^T pinv(Sigma kron Sigma) vec(Sigma) = 1 (exact Sigma)")
 S = sigma_blue_mp(Gth0 * mp.mpf("0.99"), k0, g0, n0)
 # exact Sigma from a,b,c
 a_ = g0**1.5 * mp.sqrt(k0) * (n0 + 1) / (4 * (k0 + g0))

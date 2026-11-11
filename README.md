@@ -24,23 +24,23 @@ Default parameters: `kappa = 0.1`, `gamma = 1e-4`, `n_th = 100`.
 
 ## Layout
 
-- `symbolic/analytic_ss.py` — closed-form steady state; near-threshold
+- `symbolic/analytic_ss.py` - closed-form steady state; near-threshold
   expansions of `n_d`, `n_b`, `Pi`, symplectic eigenvalues, `d sigma/dG`,
   and the QFI coefficient (mpmath). Slowest script, ~50 s.
-- `symbolic/proof_Pi_terms.py` — the `1/delta` divergence of `Pi` is carried
+- `symbolic/proof_Pi_terms.py` - the `1/delta` divergence of `Pi` is carried
   entirely by the second term `2 Tr[A_irr^T D^-1 A_irr sigma]`; exact `C_Pi`.
-- `symbolic/proof_universality.py` — `F delta^2 -> 1`, evaluated exactly for
+- `symbolic/proof_universality.py` - `F delta^2 -> 1`, evaluated exactly for
   several `(r, n_th)`.
-- `symbolic/rank2_structure.py` — `a*b - c^2 = 0` for an arbitrary diagonal
+- `symbolic/rank2_structure.py` - `a*b - c^2 = 0` for an arbitrary diagonal
   `D`; threshold and scaling beyond the RWA.
-- `validation/verify_equations.py` — the displayed equations, double precision.
-- `validation/verify_all_results.py` — the same quantities in 60-digit mpmath,
+- `validation/verify_equations.py` - the displayed equations, double precision.
+- `validation/verify_all_results.py` - the same quantities in 60-digit mpmath,
   plus the numbers quoted in the text (`c_1`, max `F_red`, fitted exponents).
-- `validation/verify_beyond_rwa.py` — threshold shift without the RWA.
-- `validation/verify_von_neumann_entropy.py` — `S_vN` and `S_W` versus
+- `validation/verify_beyond_rwa.py` - threshold shift without the RWA.
+- `validation/verify_von_neumann_entropy.py` - `S_vN` and `S_W` versus
   `ln(1/eps)` near the threshold.
-- `figures/compute_sweep_data.py` — generates `sweep_data.csv`.
-- `figures/make_fig_tradeoff.py`, `figures/make_fig_ratio.py` — Figures 1 and 2.
+- `figures/compute_sweep_data.py` - generates `sweep_data.csv`.
+- `figures/make_fig_tradeoff.py`, `figures/make_fig_ratio.py` - Figures 1 and 2.
 
 Every script runs without arguments and prints what it tests. `sweep_data.csv`
 is included, so the figures can be redrawn without rerunning the sweep.
